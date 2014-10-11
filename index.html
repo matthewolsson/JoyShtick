@@ -43,6 +43,8 @@
 
 	// globals
 	var initialPoint, endPoint, dragging = false, c, c2, ctxbase, ctxtop;
+	// used for joystick calculations
+	var xdistance,ydistance,totalDistance,adjustedX,properY;
 
 	// constants
 	var RADIUS_OF_JOYSTICK_BASE = 40, RADIUS_OF_JOYSTICK = 25;
@@ -72,7 +74,7 @@
 		{
 			e.preventDefault();
 			dragging = true;
-			if(initialPoint === null){
+			if(initialPoint === undefined){
 				initialPoint = {x: e.touches[0].clientX, y: e.touches[0].clientY};
 				// draws base of joystick
 				ctxbase.beginPath();
@@ -91,7 +93,7 @@
 			e.preventDefault();
 			if(dragging){
 				dragging = false;
-				initialPoint = null;
+				initialPoint = undefined;
 				ctxbase.clearRect (0,0,ctxbase.canvas.width,ctxbase.canvas.height);
 				ctxtop.clearRect(0,0,ctxtop.canvas.width,ctxtop.canvas.height);
 			}
@@ -102,33 +104,27 @@
 			ctxbase.canvas.height = window.innerHeight;
 		};*/
 	}
-	var xdistance,ydistance,totalDistance,properX,properY;
-	function drawJoyStickTop(initialPoint,endPoint){
-		xdistance = endPoint.x-initialPoint.x;
-		ydistance = endPoint.y-initialPoint.y;
 
+	function drawJoyStickTop(initialPoint,currentPoint){
+		xdistance = currentPoint.x-initialPoint.x;
+		ydistance = currentPoint.y-initialPoint.y;
 		totalDistance = (xdistance*xdistance+ydistance*ydistance);
-		properX = endPoint.x,properY = endPoint.y;
-		if(totalDistance > 1600){
+		adjustedX = currentPoint.x,adjustedY = currentPoint.y; // if inside base circle no adjustments needed
+		// if the top joystick is outside of the base circle
+		if(totalDistance > 1600){ 
+			// calculates the x and y offsets from the origin of the base joystick
 			changeX = (RADIUS_OF_JOYSTICK_BASE)/Math.sqrt(1 + ((ydistance*ydistance)/(xdistance*xdistance)));
 			changeY = Math.sqrt(RADIUS_OF_JOYSTICK_BASE*RADIUS_OF_JOYSTICK_BASE - changeX*changeX);
-
+			// adjusts the offsets for all four quadrants of the circle
 			changeX = changeX*xdistance/Math.abs(xdistance);
 			changeY = changeY*ydistance/Math.abs(ydistance);
-
-			console.log("Xdistance: " + xdistance);
-			console.log("Ydistance: " + ydistance);
-
-			/*var angle = Math.atan(ydistance/xdistance);
-			var changeX = RADIUS_OF_JOYSTICK*Math.cos(angle);
-			var changeY = RADIUS_OF_JOYSTICK*Math.sin(angle);
-			*/
-			properX = initialPoint.x + changeX;
-			properY = initialPoint.y + changeY;
+			// overwriting the top joysticks positions with the appropriate adjustments
+			adjustedX = initialPoint.x + changeX;
+			adjustedY = initialPoint.y + changeY;
 		}
 		ctxtop.clearRect(0,0,ctxtop.canvas.width,ctxtop.canvas.height);
 		ctxtop.beginPath();
-	    ctxtop.arc(properX, properY, RADIUS_OF_JOYSTICK, 0, 2 * Math.PI, false);
+	    ctxtop.arc(adjustedX, adjustedY, RADIUS_OF_JOYSTICK, 0, 2 * Math.PI, false);
 	    ctxtop.lineWidth = 5;
 	    ctxtop.fillStyle = "rgba(111, 111, 111, .5)";
 	    ctxtop.fill();
