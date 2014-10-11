@@ -1,0 +1,152 @@
+// index.html (named such for phone gap build purposes)
+// Matthew Olsson 10/10/2014
+// JoyShtick.js Library 
+// http://joyshtickblog.blogspot.com/
+
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, 
+    user-scalable=no, initial-scale=1, maximum-scale=1, user-scalable=0" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+<style type="text/css">
+	body { margin: 0; padding: 0; background: #000;}
+	//canvas { display: block; margin: 0 auto; background: #fff; }
+	#base {
+		display: block;
+		background: #ffffff;
+		margin: 0 auto;
+     	position:absolute;
+     	z-index: 0;
+     	left: 0px;
+     	top: 0px;
+    }
+    #top{
+    	display: block;
+		margin: 0 auto;
+  		background: rgba(0,0,0,0);
+  		position: absolute;
+  		left: 0px;
+  		top: 0px;
+  		z-index: 1;
+  		cursor: pointer;
+  	}
+</style>
+<script>
+
+	window.onload = init;
+
+	// globals
+	var initialPoint, endPoint, dragging = false, c, c2, ctxbase, ctxtop;
+
+	// constants
+	var RADIUS_OF_JOYSTICK_BASE = 40, RADIUS_OF_JOYSTICK = 25;
+
+	function init() {
+
+		c = document.getElementById("base");
+		ctxbase = c.getContext("2d");
+		ctxbase.canvas.width  = window.innerWidth;
+		ctxbase.canvas.height = window.innerHeight;
+		ctxbase.clearRect (0,0,ctxbase.canvas.width,ctxbase.canvas.height); 
+
+
+		c2 = document.getElementById("top");
+		ctxtop = c2.getContext("2d");
+		ctxtop.canvas.width  = window.innerWidth;
+		ctxtop.canvas.height = window.innerHeight;
+		ctxtop.clearRect(0,0,ctxtop.canvas.width,ctxtop.canvas.height);
+
+		// listen for touches
+		window.addEventListener('touchstart', function(e) 
+		{
+			e.preventDefault();
+		}, false);
+
+		window.addEventListener('touchmove', function(e) 
+		{
+			e.preventDefault();
+			dragging = true;
+			if(initialPoint === null){
+				initialPoint = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+				// draws base of joystick
+				ctxbase.beginPath();
+			    ctxbase.arc(initialPoint.x, initialPoint.y, RADIUS_OF_JOYSTICK_BASE, 0, 2 * Math.PI, false);
+			    ctxbase.lineWidth = 5;
+			    ctxbase.strokeStyle = "rgba(111, 111, 111, .5)";
+			    ctxbase.stroke();
+			}
+
+			endPoint = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+			drawJoyStickTop(initialPoint,endPoint);
+		}, false);
+
+		window.addEventListener('touchend', function(e) 
+		{
+			e.preventDefault();
+			if(dragging){
+				dragging = false;
+				initialPoint = null;
+				ctxbase.clearRect (0,0,ctxbase.canvas.width,ctxbase.canvas.height);
+				ctxtop.clearRect(0,0,ctxtop.canvas.width,ctxtop.canvas.height);
+			}
+		}, false);
+
+		/*window.onresize = function(){
+			ctxbase.canvas.width  = window.innerWidth;
+			ctxbase.canvas.height = window.innerHeight;
+		};*/
+	}
+	var xdistance,ydistance,totalDistance,properX,properY;
+	function drawJoyStickTop(initialPoint,endPoint){
+		xdistance = endPoint.x-initialPoint.x;
+		ydistance = endPoint.y-initialPoint.y;
+
+		totalDistance = (xdistance*xdistance+ydistance*ydistance);
+		properX = endPoint.x,properY = endPoint.y;
+		if(totalDistance > 1600){
+			changeX = (RADIUS_OF_JOYSTICK_BASE)/Math.sqrt(1 + ((ydistance*ydistance)/(xdistance*xdistance)));
+			changeY = Math.sqrt(RADIUS_OF_JOYSTICK_BASE*RADIUS_OF_JOYSTICK_BASE - changeX*changeX);
+
+			changeX = changeX*xdistance/Math.abs(xdistance);
+			changeY = changeY*ydistance/Math.abs(ydistance);
+
+			console.log("Xdistance: " + xdistance);
+			console.log("Ydistance: " + ydistance);
+
+			/*var angle = Math.atan(ydistance/xdistance);
+			var changeX = RADIUS_OF_JOYSTICK*Math.cos(angle);
+			var changeY = RADIUS_OF_JOYSTICK*Math.sin(angle);
+			*/
+			properX = initialPoint.x + changeX;
+			properY = initialPoint.y + changeY;
+		}
+		ctxtop.clearRect(0,0,ctxtop.canvas.width,ctxtop.canvas.height);
+		ctxtop.beginPath();
+	    ctxtop.arc(properX, properY, RADIUS_OF_JOYSTICK, 0, 2 * Math.PI, false);
+	    ctxtop.lineWidth = 5;
+	    ctxtop.fillStyle = "rgba(111, 111, 111, .5)";
+	    ctxtop.fill();
+	    ctxtop.strokeStyle = "rgba(111, 111, 111, .5)";
+	    ctxtop.stroke();
+	}
+
+</script>
+
+</head>
+
+<body>
+	<canvas id="base">
+		Your browser does not support the HTML5 canvas tag.
+	</canvas>
+	<canvas id="top">
+		Your browser does not support the HTML5 canvas tag.
+	</canvas>
+</body>
+
+</html>
