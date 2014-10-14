@@ -50,35 +50,39 @@
 	window.onload = init;
 
 	// globals
-	var initialPoint, endPoint, dragging = false, canvasBaseLeft, canvasTopLeft, canvasBaseRight, ctxbaseleft, ctxtopleft, ctxbaseright, buttons, timeOfLastPress;
+	var initialPoint, endPoint, dragging = false, canvasBaseLeft, canvasTopLeft, canvasBaseRight, ctxbaseleft, ctxtopleft, ctxbaseright, buttons = [], timeOfLastPress, applicationWidth,applicationHeight;
 	// used for joystick calculations
 	var xdistance,ydistance,totalDistance,adjustedX,properY;
 
 	// constants
 	// TODO - change size of joystick to be responsive to screen size
-	var RADIUS_OF_JOYSTICK_BASE = 40, RADIUS_OF_JOYSTICK = 25;
+	var RADIUS_OF_JOYSTICK_BASE = 40, RADIUS_OF_JOYSTICK = 25, SIZE_OF_FINGERS = 20;
 
-	function init() {
+	function init(appWidth,appHeight) {
+
+		//application dimensions
+		applicationWidth = window.innerWidth;
+		applicationHeight = window.innerHeight;
 
 		// initializes canvases
 		canvasBaseLeft = document.getElementById("baseleft");
 		ctxbaseleft = canvasBaseLeft.getContext("2d");
-		ctxbaseleft.canvas.width  = window.innerWidth/2;
-		ctxbaseleft.canvas.height = window.innerHeight;
+		ctxbaseleft.canvas.width  = applicationWidth/2;
+		ctxbaseleft.canvas.height = applicationHeight;
 		ctxbaseleft.clearRect (0,0,ctxbaseleft.canvas.width,ctxbaseleft.canvas.height); 
 
 		canvasTopLeft = document.getElementById("topleft");
 		ctxtopleft = canvasTopLeft.getContext("2d");
-		ctxtopleft.canvas.width  = window.innerWidth/2;
-		ctxtopleft.canvas.height = window.innerHeight;
+		ctxtopleft.canvas.width  = applicationWidth/2;
+		ctxtopleft.canvas.height = applicationHeight;
 		ctxtopleft.clearRect(0,0,ctxtopleft.canvas.width,ctxtopleft.canvas.height);
 
 		canvasBaseRight = document.getElementById("baseright");
 		ctxbaseright = canvasBaseRight.getContext("2d");
-		ctxbaseright.canvas.width  = window.innerWidth/2;
-		ctxbaseright.canvas.height = window.innerHeight;
+		ctxbaseright.canvas.width  = applicationWidth/2;
+		ctxbaseright.canvas.height = applicationHeight;
 		ctxbaseright.clearRect(0,0,ctxbaseright.canvas.width,ctxbaseright.canvas.height);
-		canvasBaseRight.style.marginLeft = window.innerWidth/2; 
+		canvasBaseRight.style.marginLeft = applicationWidth/2; 
 
 		// listen for touches
 		canvasTopLeft.addEventListener('touchstart', function(e) { e.preventDefault(); }, false);
@@ -111,16 +115,22 @@
 		}, false);
 
 		canvasBaseRight.addEventListener('touchstart', function(e){
-			pressButton();
+			pressButton(e);
 		}, false);
 
 		canvasBaseRight.addEventListener('touchend', function(e){
 			pressButton();
 		}, false);
 
+		var hello = function(){ console.log("hello"); }
+		var goodbye = function(){ console.log("Goodbye"); }
+
+		addButton(700,300,hello,"red","circle", 40);
+		addButton(800,200,goodbye, "blue", "square", 40);
+
 		/*window.onresize = function(){
-			ctxbaseleft.canvas.width  = window.innerWidth;
-			ctxbaseleft.canvas.height = window.innerHeight;
+			ctxbaseleft.canvas.width  = applicationWidth;
+			ctxbaseleft.canvas.height = applicationHeight;
 		};*/
 	}
 
@@ -151,22 +161,51 @@
 	    ctxtopleft.stroke();
 	}
 	// versatile: user can provide as many parameters as they want and it will set the rest to undefined
-	function addButton(userInputX,userInputY,userInputFunction,userInputColor,userInputShape){
-		buttons[buttons.length] = {x:userInputX,y:userInputY,function:userInputFunction,color:userInputColor,shape:userInputShape}
-		drawButtons;
+	// must be on right side of the screen
+	function addButton(userInputX,userInputY,userInputFunction,userInputColor,userInputShape,userInputSize){
+		buttons[buttons.length] = {x:userInputX,y:userInputY,function:userInputFunction,color:userInputColor,shape:userInputShape,size:userInputSize}
+		drawButtons();
 	}
 	// draw buttons
 	function drawButtons(){
-
+		for(i = 0; i < buttons.length; i++){
+			if(buttons[i].shape === "circle"){
+				ctxbaseright.beginPath();
+			    ctxbaseright.arc(buttons[i].x-applicationWidth/2, buttons[i].y, buttons[i].size/2, 0, Math.PI * 2, false);
+			    ctxbaseright.fillStyle = buttons[i].color;
+			    ctxbaseright.fill();
+			}
+			else if(buttons[i].shape === "square"){
+				ctxbaseright.beginPath();
+			    ctxbaseright.rect(buttons[i].x-applicationWidth/2, buttons[i].y, buttons[i].size, buttons[i].size);
+			    ctxbaseright.fillStyle = buttons[i].color;
+			    ctxbaseright.fill();
+			}
+		}
 	}
-	// press button
-	function pressButton(){
-
+	// press button - performs aabb collision for buttons
+	function pressButton(e){
+		if(buttons != undefined){
+			var press = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+			// checks for if a button is being pressed based on its shape and size
+			for(i = 0; i < buttons.length; i++){
+				if(buttons[i].shape === "circle"){
+					if ((((press.x-buttons[i].x)*(press.x-buttons[i].x))+((press.y-buttons[i].y)*(press.y-buttons[i].y)))<(((buttons[i].size/2)*(buttons[i].size/2))+(SIZE_OF_FINGERS*SIZE_OF_FINGERS))){
+					    buttons[i].function();
+					}
+				}
+				else if(buttons[i].shape === "square"){
+					if ((((press.x-buttons[i].x))<(buttons[i].size+SIZE_OF_FINGERS/2)&&((press.x-buttons[i].x)>(0-SIZE_OF_FINGERS/2)))&&(((press.y-buttons[i].y))<(buttons[i].size+SIZE_OF_FINGERS/2)&&((press.y-buttons[i].y)>(0-SIZE_OF_FINGERS/2)))){
+						buttons[i].function();
+					}
+				}
+			}
+		}
 	}
 	// release button
 	function releaseButton(){
-
 	}
+
 
 </script>
 </head>
