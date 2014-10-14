@@ -17,7 +17,7 @@
 <style type="text/css">
 	body { margin: 0; padding: 0; background: #000;}
 	//canvas { display: block; margin: 0 auto; background: #fff; }
-	#base {
+	#baseleft{
 		display: block;
 		background: #ffffff;
 		margin: 0 auto;
@@ -26,7 +26,15 @@
      	left: 0px;
      	top: 0px;
     }
-    #top{
+    #baseright{
+		display: block;
+		background: #ffffff;
+     	position:absolute;
+     	z-index: 0;
+     	left: 0px;
+     	top: 0px;
+    }
+    #topleft{
     	display: block;
 		margin: 0 auto;
   		background: rgba(0,0,0,0);
@@ -42,66 +50,77 @@
 	window.onload = init;
 
 	// globals
-	var initialPoint, endPoint, dragging = false, c, c2, ctxbase, ctxtop;
+	var initialPoint, endPoint, dragging = false, canvasBaseLeft, canvasTopLeft, canvasBaseRight, ctxbaseleft, ctxtopleft, ctxbaseright, buttons, timeOfLastPress;
 	// used for joystick calculations
 	var xdistance,ydistance,totalDistance,adjustedX,properY;
 
 	// constants
+	// TODO - change size of joystick to be responsive to screen size
 	var RADIUS_OF_JOYSTICK_BASE = 40, RADIUS_OF_JOYSTICK = 25;
 
 	function init() {
 
-		c = document.getElementById("base");
-		ctxbase = c.getContext("2d");
-		ctxbase.canvas.width  = window.innerWidth;
-		ctxbase.canvas.height = window.innerHeight;
-		ctxbase.clearRect (0,0,ctxbase.canvas.width,ctxbase.canvas.height); 
+		// initializes canvases
+		canvasBaseLeft = document.getElementById("baseleft");
+		ctxbaseleft = canvasBaseLeft.getContext("2d");
+		ctxbaseleft.canvas.width  = window.innerWidth/2;
+		ctxbaseleft.canvas.height = window.innerHeight;
+		ctxbaseleft.clearRect (0,0,ctxbaseleft.canvas.width,ctxbaseleft.canvas.height); 
 
+		canvasTopLeft = document.getElementById("topleft");
+		ctxtopleft = canvasTopLeft.getContext("2d");
+		ctxtopleft.canvas.width  = window.innerWidth/2;
+		ctxtopleft.canvas.height = window.innerHeight;
+		ctxtopleft.clearRect(0,0,ctxtopleft.canvas.width,ctxtopleft.canvas.height);
 
-		c2 = document.getElementById("top");
-		ctxtop = c2.getContext("2d");
-		ctxtop.canvas.width  = window.innerWidth;
-		ctxtop.canvas.height = window.innerHeight;
-		ctxtop.clearRect(0,0,ctxtop.canvas.width,ctxtop.canvas.height);
+		canvasBaseRight = document.getElementById("baseright");
+		ctxbaseright = canvasBaseRight.getContext("2d");
+		ctxbaseright.canvas.width  = window.innerWidth/2;
+		ctxbaseright.canvas.height = window.innerHeight;
+		ctxbaseright.clearRect(0,0,ctxbaseright.canvas.width,ctxbaseright.canvas.height);
+		canvasBaseRight.style.marginLeft = window.innerWidth/2; 
 
 		// listen for touches
-		window.addEventListener('touchstart', function(e) 
-		{
-			e.preventDefault();
-		}, false);
+		canvasTopLeft.addEventListener('touchstart', function(e) { e.preventDefault(); }, false);
 
-		window.addEventListener('touchmove', function(e) 
-		{
+		canvasTopLeft.addEventListener('touchmove', function(e) {
 			e.preventDefault();
 			dragging = true;
 			if(initialPoint === undefined){
 				initialPoint = {x: e.touches[0].clientX, y: e.touches[0].clientY};
 				// draws base of joystick
-				ctxbase.beginPath();
-			    ctxbase.arc(initialPoint.x, initialPoint.y, RADIUS_OF_JOYSTICK_BASE, 0, 2 * Math.PI, false);
-			    ctxbase.lineWidth = 5;
-			    ctxbase.strokeStyle = "rgba(111, 111, 111, .5)";
-			    ctxbase.stroke();
+				ctxbaseleft.beginPath();
+			    ctxbaseleft.arc(initialPoint.x, initialPoint.y, RADIUS_OF_JOYSTICK_BASE, 0, 2 * Math.PI, false);
+			    ctxbaseleft.lineWidth = 5;
+			    ctxbaseleft.strokeStyle = "rgba(111, 111, 111, .5)";
+			    ctxbaseleft.stroke();
 			}
 
 			endPoint = {x: e.touches[0].clientX, y: e.touches[0].clientY};
 			drawJoyStickTop(initialPoint,endPoint);
 		}, false);
 
-		window.addEventListener('touchend', function(e) 
-		{
+		canvasTopLeft.addEventListener('touchend', function(e) {
 			e.preventDefault();
 			if(dragging){
 				dragging = false;
 				initialPoint = undefined;
-				ctxbase.clearRect (0,0,ctxbase.canvas.width,ctxbase.canvas.height);
-				ctxtop.clearRect(0,0,ctxtop.canvas.width,ctxtop.canvas.height);
+				ctxbaseleft.clearRect (0,0,ctxbaseleft.canvas.width,ctxbaseleft.canvas.height);
+				ctxtopleft.clearRect(0,0,ctxtopleft.canvas.width,ctxtopleft.canvas.height);
 			}
 		}, false);
 
+		canvasBaseRight.addEventListener('touchstart', function(e){
+			pressButton();
+		}, false);
+
+		canvasBaseRight.addEventListener('touchend', function(e){
+			pressButton();
+		}, false);
+
 		/*window.onresize = function(){
-			ctxbase.canvas.width  = window.innerWidth;
-			ctxbase.canvas.height = window.innerHeight;
+			ctxbaseleft.canvas.width  = window.innerWidth;
+			ctxbaseleft.canvas.height = window.innerHeight;
 		};*/
 	}
 
@@ -122,27 +141,44 @@
 			adjustedX = initialPoint.x + changeX;
 			adjustedY = initialPoint.y + changeY;
 		}
-		ctxtop.clearRect(0,0,ctxtop.canvas.width,ctxtop.canvas.height);
-		ctxtop.beginPath();
-	    ctxtop.arc(adjustedX, adjustedY, RADIUS_OF_JOYSTICK, 0, 2 * Math.PI, false);
-	    ctxtop.lineWidth = 5;
-	    ctxtop.fillStyle = "rgba(111, 111, 111, .5)";
-	    ctxtop.fill();
-	    ctxtop.strokeStyle = "rgba(111, 111, 111, .5)";
-	    ctxtop.stroke();
+		ctxtopleft.clearRect(0,0,ctxtopleft.canvas.width,ctxtopleft.canvas.height);
+		ctxtopleft.beginPath();
+	    ctxtopleft.arc(adjustedX, adjustedY, RADIUS_OF_JOYSTICK, 0, 2 * Math.PI, false);
+	    ctxtopleft.lineWidth = 5;
+	    ctxtopleft.fillStyle = "rgba(111, 111, 111, .5)";
+	    ctxtopleft.fill();
+	    ctxtopleft.strokeStyle = "rgba(111, 111, 111, .5)";
+	    ctxtopleft.stroke();
+	}
+	// versatile: user can provide as many parameters as they want and it will set the rest to undefined
+	function addButton(userInputX,userInputY,userInputFunction,userInputColor,userInputShape){
+		buttons[buttons.length] = {x:userInputX,y:userInputY,function:userInputFunction,color:userInputColor,shape:userInputShape}
+		drawButtons;
+	}
+	// draw buttons
+	function drawButtons(){
+
+	}
+	// press button
+	function pressButton(){
+
+	}
+	// release button
+	function releaseButton(){
+
 	}
 
 </script>
-
 </head>
-
 <body>
-	<canvas id="base">
+	<canvas id="topleft">
 		Your browser does not support the HTML5 canvas tag.
 	</canvas>
-	<canvas id="top">
+	<canvas id="baseleft">
+		Your browser does not support the HTML5 canvas tag.
+	</canvas>
+	<canvas id="baseright">
 		Your browser does not support the HTML5 canvas tag.
 	</canvas>
 </body>
-
 </html>
