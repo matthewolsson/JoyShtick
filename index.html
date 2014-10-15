@@ -17,33 +17,6 @@
 <style type="text/css">
 	body { margin: 0; padding: 0; background: #000;}
 	//canvas { display: block; margin: 0 auto; background: #fff; }
-	#baseleft{
-		display: block;
-		background: #ffffff;
-		margin: 0 auto;
-     	position:absolute;
-     	z-index: 0;
-     	left: 0px;
-     	top: 0px;
-    }
-    #baseright{
-		display: block;
-		background: #ffffff;
-     	position:absolute;
-     	z-index: 0;
-     	left: 0px;
-     	top: 0px;
-    }
-    #topleft{
-    	display: block;
-		margin: 0 auto;
-  		background: rgba(0,0,0,0);
-  		position: absolute;
-  		left: 0px;
-  		top: 0px;
-  		z-index: 1;
-  		cursor: pointer;
-  	}
 </style>
 <script>
 
@@ -56,33 +29,26 @@
 
 	// constants
 	// TODO - change size of joystick to be responsive to screen size
+	// TODO - accept size of parent DOM element on initialization
 	var RADIUS_OF_JOYSTICK_BASE = 40, RADIUS_OF_JOYSTICK = 25, SIZE_OF_FINGERS = 20;
-
+	
 	function init(appWidth,appHeight) {
 
 		//application dimensions
-		applicationWidth = window.innerWidth;
-		applicationHeight = window.innerHeight;
+		applicationWidth = screen.width;
+		applicationHeight = screen.height;
+		
+		createCanvases(applicationWidth, applicationHeight);
 
 		// initializes canvases
-		canvasBaseLeft = document.getElementById("baseleft");
 		ctxbaseleft = canvasBaseLeft.getContext("2d");
-		ctxbaseleft.canvas.width  = applicationWidth/2;
-		ctxbaseleft.canvas.height = applicationHeight;
 		ctxbaseleft.clearRect (0,0,ctxbaseleft.canvas.width,ctxbaseleft.canvas.height); 
 
-		canvasTopLeft = document.getElementById("topleft");
 		ctxtopleft = canvasTopLeft.getContext("2d");
-		ctxtopleft.canvas.width  = applicationWidth/2;
-		ctxtopleft.canvas.height = applicationHeight;
 		ctxtopleft.clearRect(0,0,ctxtopleft.canvas.width,ctxtopleft.canvas.height);
 
-		canvasBaseRight = document.getElementById("baseright");
 		ctxbaseright = canvasBaseRight.getContext("2d");
-		ctxbaseright.canvas.width  = applicationWidth/2;
-		ctxbaseright.canvas.height = applicationHeight;
 		ctxbaseright.clearRect(0,0,ctxbaseright.canvas.width,ctxbaseright.canvas.height);
-		canvasBaseRight.style.marginLeft = applicationWidth/2; 
 
 		// listen for touches
 		canvasTopLeft.addEventListener('touchstart', function(e) { e.preventDefault(); }, false);
@@ -119,7 +85,7 @@
 		}, false);
 
 		canvasBaseRight.addEventListener('touchend', function(e){
-			pressButton();
+			releaseButton();
 		}, false);
 
 		var hello = function(){ console.log("hello"); }
@@ -132,6 +98,44 @@
 			ctxbaseleft.canvas.width  = applicationWidth;
 			ctxbaseleft.canvas.height = applicationHeight;
 		};*/
+	}
+
+	function createCanvases(appWidth,appHeight){
+		canvasBaseLeft = document.createElement("canvas");
+		canvasBaseLeft.style.display = "block";
+		canvasBaseLeft.style.background = "#ffffff";
+		canvasBaseLeft.style.margin = "auto";
+		canvasBaseLeft.style.position = "absolute";
+		canvasBaseLeft.style.zIndex = 0;
+		canvasBaseLeft.style.left = 0;
+		canvasBaseLeft.style.top = 0;
+		canvasBaseLeft.width  = applicationWidth/2;
+		canvasBaseLeft.height = applicationHeight;
+		document.body.appendChild(canvasBaseLeft);
+		
+		canvasTopLeft = document.createElement("canvas");
+		canvasTopLeft.style.display = "block";
+		canvasTopLeft.style.background = "rgba(0,0,0,0)";
+		canvasTopLeft.style.margin = "auto";
+		canvasTopLeft.style.position = "absolute";
+		canvasTopLeft.style.zIndex = 1;
+		canvasTopLeft.style.left = 0;
+		canvasTopLeft.style.top = 0;
+		canvasTopLeft.width  = applicationWidth/2;
+		canvasTopLeft.height = applicationHeight;
+		document.body.appendChild(canvasTopLeft);
+
+		canvasBaseRight = document.createElement("canvas");
+		canvasBaseRight.style.display = "block";
+		canvasBaseRight.style.background = "#ffffff";
+		canvasBaseRight.style.position = "absolute";
+		canvasBaseRight.style.zIndex = 0;
+		canvasBaseRight.style.left = 0;
+		canvasBaseRight.style.top = 0;
+		canvasBaseRight.style.marginLeft = appWidth/2; 
+		canvasBaseRight.width  = applicationWidth/2;
+		canvasBaseRight.height = applicationHeight;
+		document.body.appendChild(canvasBaseRight);
 	}
 
 	function drawJoyStickTop(initialPoint,currentPoint){
@@ -160,7 +164,6 @@
 	    ctxtopleft.strokeStyle = "rgba(111, 111, 111, .5)";
 	    ctxtopleft.stroke();
 	}
-	// versatile: user can provide as many parameters as they want and it will set the rest to undefined
 	// must be on right side of the screen
 	function addButton(userInputX,userInputY,userInputFunction,userInputColor,userInputShape,userInputSize){
 		buttons[buttons.length] = {x:userInputX,y:userInputY,function:userInputFunction,color:userInputColor,shape:userInputShape,size:userInputSize}
@@ -206,14 +209,10 @@
 	function releaseButton(){
 	}
 
-
 </script>
 </head>
 <body>
 	<canvas id="topleft">
-		Your browser does not support the HTML5 canvas tag.
-	</canvas>
-	<canvas id="baseleft">
 		Your browser does not support the HTML5 canvas tag.
 	</canvas>
 	<canvas id="baseright">
