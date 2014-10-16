@@ -181,6 +181,7 @@
 			}
 		};
 		// press button - performs aabb collision for buttons
+		// TODO - fix mouse x and y coordinates to account for the application not being in the top left
 		var pressButton = function(e){
 			if(buttons != undefined){
 				var press = {x:e.touches[0].clientX, y:e.touches[0].clientY};
