@@ -168,13 +168,13 @@
 			for(i = 0; i < buttons.length; i++){
 				if(buttons[i].shape === "circle"){
 					ctxbaseright.beginPath();
-				    ctxbaseright.arc(buttons[i].x-applicationWidth/2, buttons[i].y, buttons[i].size/2, 0, Math.PI * 2, false);
+				    ctxbaseright.arc(buttons[i].x-applicationWidth/2,buttons[i].y, buttons[i].size/2, 0, Math.PI * 2, false);
 				    ctxbaseright.fillStyle = buttons[i].color;
 				    ctxbaseright.fill();
 				}
 				else if(buttons[i].shape === "square"){
 					ctxbaseright.beginPath();
-				    ctxbaseright.rect(buttons[i].x-applicationWidth/2, buttons[i].y, buttons[i].size, buttons[i].size);
+				    ctxbaseright.rect(buttons[i].x-applicationWidth/2,buttons[i].y, buttons[i].size, buttons[i].size);
 				    ctxbaseright.fillStyle = buttons[i].color;
 				    ctxbaseright.fill();
 				}
@@ -205,12 +205,12 @@
 		init();
 	}
 
-	var test = new JoyShtick(screen.width,screen.height);
+	var test = new JoyShtick(window.innerWidth,window.innerHeight);
 	var hello = function(){ console.log("hello"); }
 	var goodbye = function(){ console.log("Goodbye"); }
 
-	test.addButton(700,300,hello,"red","circle", 40);
-	test.addButton(800,200,goodbye, "blue", "square", 40);
+	test.addButton(800,200,hello,"red","circle", 40);
+	test.addButton(800,300,goodbye, "blue", "square", 40);
 
 </script>
 </head>
