@@ -6,21 +6,21 @@
 
 function JoyShtick(appWidth,appHeight){
 
-	//window.onload = init;
-
 	// globals
 	var initialPoint, endPoint, dragging = false, canvasBaseLeft, canvasTopLeft, canvasBaseRight, ctxbaseleft, ctxtopleft, ctxbaseright, buttons = [], timeOfLastPress, buttonPressed = {button:undefined,isPressed:false}, previousOpacity;
 	// screen dimensions
 	var applicationWidth = appWidth, applicationHeight = appHeight;
 	// joystick calculations
 	var xdistance,ydistance,totalDistance,adjustedX,properY;
+	// visible properties
+	this.stickVector = {horizontal: undefined, vertical: undefined};
 
 	// constants
 	// TODO - change size of joystick to be responsive to screen size
 	// TODO - accept size of parent DOM element on initialization
 	var RADIUS_OF_JOYSTICK_BASE = 40, RADIUS_OF_JOYSTICK = 25, SIZE_OF_FINGERS = 20, LINE_WIDTH = 5;
 	
-	var init = function(){
+	var init = (function(){
 		
 		createCanvases(applicationWidth, applicationHeight);
 
@@ -52,17 +52,20 @@ function JoyShtick(appWidth,appHeight){
 
 			endPoint = {x: e.touches[0].clientX, y: e.touches[0].clientY};
 			drawJoyStickTop(initialPoint,endPoint);
+			updateStickVector(initialPoint,endPoint);
 		}, false);
 
-		canvasTopLeft.addEventListener('touchend', function(e) {
+		canvasTopLeft.addEventListener('touchend', (function(e) {
 			e.preventDefault();
 			if(dragging){
 				dragging = false;
 				initialPoint = undefined;
 				ctxbaseleft.clearRect (0,0,ctxbaseleft.canvas.width,ctxbaseleft.canvas.height);
 				ctxtopleft.clearRect(0,0,ctxtopleft.canvas.width,ctxtopleft.canvas.height);
+				this.stickVector.horizontal = undefined;
+				this.stickVector.vertical = undefined;
 			}
-		}, false);
+		}.bind(this)), false);
 
 		canvasBaseRight.addEventListener('touchstart', function(e){
 			pressButton(e);
@@ -71,17 +74,11 @@ function JoyShtick(appWidth,appHeight){
 		canvasBaseRight.addEventListener('touchend', function(e){
 			releaseButton();
 		}, false);
-
-		/*window.onresize = function(){
-			ctxbaseleft.canvas.width  = applicationWidth;
-			ctxbaseleft.canvas.height = applicationHeight;
-		};*/
-	};
+	}.bind(this));
 
 	var createCanvases = function(appWidth,appHeight){
 		canvasBaseLeft = document.createElement("canvas");
 		canvasBaseLeft.style.display = "block";
-		canvasBaseLeft.style.background = "#ffffff";
 		canvasBaseLeft.style.margin = "auto";
 		canvasBaseLeft.style.position = "absolute";
 		canvasBaseLeft.style.zIndex = 0;
@@ -93,7 +90,6 @@ function JoyShtick(appWidth,appHeight){
 		
 		canvasTopLeft = document.createElement("canvas");
 		canvasTopLeft.style.display = "block";
-		canvasTopLeft.style.background = "rgba(0,0,0,0)";
 		canvasTopLeft.style.margin = "auto";
 		canvasTopLeft.style.position = "absolute";
 		canvasTopLeft.style.zIndex = 1;
@@ -105,7 +101,6 @@ function JoyShtick(appWidth,appHeight){
 
 		canvasBaseRight = document.createElement("canvas");
 		canvasBaseRight.style.display = "block";
-		canvasBaseRight.style.background = "#ffffff";
 		canvasBaseRight.style.position = "absolute";
 		canvasBaseRight.style.zIndex = 0;
 		canvasBaseRight.style.left = 0;
@@ -115,6 +110,11 @@ function JoyShtick(appWidth,appHeight){
 		canvasBaseRight.height = applicationHeight;
 		document.body.appendChild(canvasBaseRight);
 	};
+
+	var updateStickVector = (function(initialPoint,currentPoint){
+		this.stickVector.horizontal = (currentPoint.x-initialPoint.x);
+		this.stickVector.vertical = (currentPoint.y-initialPoint.y);
+	}.bind(this));
 
 	var drawJoyStickTop = function(initialPoint,currentPoint){
 		xdistance = currentPoint.x-initialPoint.x;
@@ -142,16 +142,6 @@ function JoyShtick(appWidth,appHeight){
 	    ctxtopleft.fill();
 	    ctxtopleft.stroke();
 	    ctxtopleft.closePath();
-	};
-	// must be on right side of the screen
-	this.addButton = function(userInputX,userInputY,userInputFunction,userInputColor,userInputShape,userInputSize){
-
-		if((typeof userInputX) === "string"){ userInputX = sanitizeInput(userInputX, "x"); }
-		if((typeof userInputY) === "string"){ userInputY = sanitizeInput(userInputY, "y"); }
-		if((typeof userInputSize) === "string"){ userInputSize = sanitizeInput(userInputSize, "size"); }
-
-		buttons[buttons.length] = {x:userInputX,y:userInputY,function:userInputFunction,color:userInputColor,shape:userInputShape,size:userInputSize}
-		drawButtons();
 	};
 
 	// sanitizes the input percentages for x,y,and size, and returns the proper result
@@ -243,5 +233,18 @@ function JoyShtick(appWidth,appHeight){
 			drawButtons(buttonPressed);
 		}
 	};
+
+	// visible functions
+	// must be on right side of the screen
+	this.addButton = function(userInputX,userInputY,userInputFunction,userInputColor,userInputShape,userInputSize){
+
+		if((typeof userInputX) === "string"){ userInputX = sanitizeInput(userInputX, "x"); }
+		if((typeof userInputY) === "string"){ userInputY = sanitizeInput(userInputY, "y"); }
+		if((typeof userInputSize) === "string"){ userInputSize = sanitizeInput(userInputSize, "size"); }
+
+		buttons[buttons.length] = {x:userInputX,y:userInputY,function:userInputFunction,color:userInputColor,shape:userInputShape,size:userInputSize}
+		drawButtons();
+	};
+
 	init();
 }

@@ -16,7 +16,6 @@
 
 <style type="text/css">
 	body { margin: 0; padding: 0; background: #000;}
-	//canvas { display: block; margin: 0 auto; background: #fff; }
 </style>
 <script src="JoyShtick.js"></script>
 <script>
@@ -34,8 +33,8 @@
         };
 	})();
 
-	var playerX, playerY,ctx;
-	var PLAYER_WIDTH = 5;
+	var playerX, playerY,ctx,joystick;
+	var PLAYER_WIDTH = 30, PLAYER_SPEED = 5;
 
 	function init(){
 		var host = document.getElementById("main");
@@ -44,19 +43,30 @@
 		host.height = result.height;
 		host.width = result.width;
 
-		var test = new JoyShtick(host.width,host.height);
-		var hello = function(){ console.log("hello"); }
-		var goodbye = function(){ console.log("Goodbye"); }
+		joystick = new JoyShtick(host.width,host.height);
+		var hello = function(){ host.style.background = "green"; }
+		var goodbye = function(){ host.style.background = "purple"; }
 
 		// x,y,function,color(rgba),shape,width
-		test.addButton("85%","60%",goodbye,"rgba(0,0,255,.5)","square","6%");
-		test.addButton("80%","80%",hello,"rgba(255,0,0,.5)","circle","6%");
+		joystick.addButton("85%","60%",goodbye,"rgba(0,0,255,.5)","square","6%");
+		joystick.addButton("80%","80%",hello,"rgba(255,0,0,.5)","circle","6%");
+
+		playerX = host.width/2;
+		playerY = host.height/2;
+		animate();
+	}
+
+	function updatePlayer(stickVector){
+		if(stickVector.horizontal != undefined && stickVector.vertical != undefined){
+			playerX += (stickVector.horizontal/100)*PLAYER_SPEED;
+			playerY += (stickVector.vertical/100)*PLAYER_SPEED;
+		}
 	}
 
 	function animate() {
 	    requestAnimFrame( animate );
 	    // move player
-	    updatePlayer();
+	    updatePlayer(joystick.stickVector);
 	    // draw player
 	    draw();
 	}
@@ -65,6 +75,7 @@
 		ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.width);
 	    ctx.fillStyle = "red";
 	    ctx.fillRect(playerX,playerY,PLAYER_WIDTH,PLAYER_WIDTH);
+	    ctx.fill();
 	}
 
 	function viewport() {
@@ -72,14 +83,14 @@
 		, a = 'inner';
 		if ( !( 'innerWidth' in window ) )
 		{
-		a = 'client';
-		e = document.documentElement || document.body;
+			a = 'client';
+			e = document.documentElement || document.body;
 		}
 		return { width : e[ a+'Width' ] , height : e[ a+'Height' ] }
 	}
 </script>
 </head>
 <body>
-	<canvas id="main" style="position: absolute; left: 0; top: 0;"></canvas>
+	<canvas id="main" style="position: absolute; left: 0; top: 0; background: #ffffff;"></canvas>
 </body>
 </html>
