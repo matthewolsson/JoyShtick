@@ -41,7 +41,7 @@ function JoyShtick(appWidth,appHeight){
 			e.preventDefault();
 			dragging = true;
 			if(initialPoint === undefined){
-				initialPoint = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+				initialPoint = {x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY};
 				// draws base of joystick
 				ctxbaseleft.beginPath();
 			    ctxbaseleft.arc(initialPoint.x, initialPoint.y, RADIUS_OF_JOYSTICK_BASE, 0, 2 * Math.PI, false);
@@ -50,7 +50,7 @@ function JoyShtick(appWidth,appHeight){
 			    ctxbaseleft.stroke();
 			}
 
-			endPoint = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+			endPoint = {x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY};
 			drawJoyStickTop(initialPoint,endPoint);
 			updateStickVector(initialPoint,endPoint);
 		}, false);
@@ -203,7 +203,12 @@ function JoyShtick(appWidth,appHeight){
 	// TODO - fix mouse x and y coordinates to account for the application not being in the top left
 	var pressButton = function(e){
 		if(buttons != undefined){
-			var press = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+			// The joystick is in use while the buttons are being pressed
+			if(initialPoint != undefined){
+				var press = {x:e.touches[1].clientX, y:e.touches[1].clientY};
+			} else {
+				var press = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+			}
 			// checks for if a button is being pressed based on its shape and size
 			for(i = 0; i < buttons.length; i++){
 				if(buttons[i].shape === "circle"){

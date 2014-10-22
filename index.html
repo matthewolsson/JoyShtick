@@ -1,3 +1,4 @@
+
 // JoyShtick.html 
 // Matthew Olsson 10/10/2014
 // JoyShtick.js Library 
@@ -33,8 +34,8 @@
         };
 	})();
 
-	var playerX, playerY,ctx,joystick;
-	var PLAYER_WIDTH = 30, PLAYER_SPEED = 5;
+	var playerX, playerY,ctx,joystick,goalX,goalY,appWidth,appHeight;
+	var PLAYER_WIDTH = 30, PLAYER_SPEED = 5, GOAL_WIDTH = 30;
 
 	function init(){
 		var host = document.getElementById("main");
@@ -42,9 +43,11 @@
 		var result = viewport();
 		host.height = result.height;
 		host.width = result.width;
+		appWidth = host.width;
+		appHeight = host.height;
 
 		joystick = new JoyShtick(host.width,host.height);
-		var hello = function(){ host.style.background = "green"; }
+		var hello = function(){ host.style.background = "yellow"; }
 		var goodbye = function(){ host.style.background = "purple"; }
 
 		// x,y,function,color(rgba),shape,width
@@ -53,6 +56,8 @@
 
 		playerX = host.width/2;
 		playerY = host.height/2;
+		goalX = Math.floor(Math.random() * (appWidth-1)) + 1;
+		goalY = Math.floor(Math.random() * (appHeight-1)) + 1;
 		animate();
 	}
 
@@ -60,6 +65,12 @@
 		if(stickVector.horizontal != undefined && stickVector.vertical != undefined){
 			playerX += (stickVector.horizontal/100)*PLAYER_SPEED;
 			playerY += (stickVector.vertical/100)*PLAYER_SPEED;
+		}
+		
+		// checks for collision between player and goal
+		if(playerX <= goalX + GOAL_WIDTH && goalX <= playerX + PLAYER_WIDTH && playerY <= goalY + GOAL_WIDTH && goalY <= playerY + PLAYER_WIDTH){
+			goalX = Math.floor(Math.random() * (appWidth-1)) + 1;
+			goalY = Math.floor(Math.random() * (appHeight-1)) + 1; 
 		}
 	}
 
@@ -75,6 +86,9 @@
 		ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.width);
 	    ctx.fillStyle = "red";
 	    ctx.fillRect(playerX,playerY,PLAYER_WIDTH,PLAYER_WIDTH);
+	    ctx.fill();
+	    ctx.fillStyle = "green";
+	    ctx.fillRect(goalX,goalY,GOAL_WIDTH,GOAL_WIDTH);
 	    ctx.fill();
 	}
 
