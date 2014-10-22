@@ -1,4 +1,4 @@
-// JoyShtick.html 
+// JoyShtick.js
 // Matthew Olsson 10/10/2014
 // JoyShtick.js Library 
 // http://joyshtickblog.blogspot.com/
@@ -20,8 +20,10 @@ function JoyShtick(appWidth,appHeight){
 	// TODO - accept size of parent DOM element on initialization
 	var RADIUS_OF_JOYSTICK_BASE = 40, RADIUS_OF_JOYSTICK = 25, SIZE_OF_FINGERS = 20, LINE_WIDTH = 5;
 	
+	// "private" functions---------------------------------------------------------------------------------------------------
+
+	// initializes the JoyShtick
 	var init = (function(){
-		
 		createCanvases(applicationWidth, applicationHeight);
 
 		// initializes canvases
@@ -34,7 +36,7 @@ function JoyShtick(appWidth,appHeight){
 		ctxbaseright = canvasBaseRight.getContext("2d");
 		ctxbaseright.clearRect(0,0,ctxbaseright.canvas.width,ctxbaseright.canvas.height);
 
-		// listen for touches
+		// listen for touches on appropriate canvases
 		canvasTopLeft.addEventListener('touchstart', function(e) { e.preventDefault(); }, false);
 
 		canvasTopLeft.addEventListener('touchmove', function(e) {
@@ -65,7 +67,7 @@ function JoyShtick(appWidth,appHeight){
 				this.stickVector.horizontal = undefined;
 				this.stickVector.vertical = undefined;
 			}
-		}.bind(this)), false);
+		}.bind(this)), false); // this is being bound for the stickVector property to be set
 
 		canvasBaseRight.addEventListener('touchstart', function(e){
 			pressButton(e);
@@ -74,8 +76,9 @@ function JoyShtick(appWidth,appHeight){
 		canvasBaseRight.addEventListener('touchend', function(e){
 			releaseButton();
 		}, false);
-	}.bind(this));
+	}.bind(this)); // this is being bound for the stickVector property to be set
 
+	// creates canvases, and applies css to them appropriately
 	var createCanvases = function(appWidth,appHeight){
 		canvasBaseLeft = document.createElement("canvas");
 		canvasBaseLeft.style.display = "block";
@@ -111,11 +114,13 @@ function JoyShtick(appWidth,appHeight){
 		document.body.appendChild(canvasBaseRight);
 	};
 
+	// updates the stickVector property
 	var updateStickVector = (function(initialPoint,currentPoint){
 		this.stickVector.horizontal = (currentPoint.x-initialPoint.x);
 		this.stickVector.vertical = (currentPoint.y-initialPoint.y);
 	}.bind(this));
 
+	// draws the top of the joystick and constrains it to the bases circumference
 	var drawJoyStickTop = function(initialPoint,currentPoint){
 		xdistance = currentPoint.x-initialPoint.x;
 		ydistance = currentPoint.y-initialPoint.y;
@@ -199,11 +204,12 @@ function JoyShtick(appWidth,appHeight){
 		    ctxbaseright.closePath();
 		}
 	};
+
 	// press button - performs simple collisions detection with a little spare room for finger size
 	// TODO - fix mouse x and y coordinates to account for the application not being in the top left
 	var pressButton = function(e){
 		if(buttons != undefined){
-			// The joystick is in use while the buttons are being pressed
+			// if the joystick is in use while the buttons are being pressed a different index must be consulted for touches
 			if(initialPoint != undefined){
 				var press = {x:e.touches[1].clientX, y:e.touches[1].clientY};
 			} else {
@@ -230,7 +236,8 @@ function JoyShtick(appWidth,appHeight){
 			}
 		}
 	};
-	// release button
+
+	// when a button is released it updates appropriately
 	var releaseButton = function(){
 		// a JoyShtick button has been pressed (not just removing the finger from the screen)
 		if(buttonPressed.isPressed){
@@ -239,7 +246,8 @@ function JoyShtick(appWidth,appHeight){
 		}
 	};
 
-	// visible functions
+	// visible functions---------------------------------------------------------------------------------------------------
+
 	// must be on right side of the screen
 	this.addButton = function(userInputX,userInputY,userInputFunction,userInputColor,userInputShape,userInputSize){
 
@@ -250,6 +258,7 @@ function JoyShtick(appWidth,appHeight){
 		buttons[buttons.length] = {x:userInputX,y:userInputY,function:userInputFunction,color:userInputColor,shape:userInputShape,size:userInputSize}
 		drawButtons();
 	};
-
+	
+	// initializes the JoyShtick after loading all of its methods
 	init();
 }

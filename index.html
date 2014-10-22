@@ -1,15 +1,14 @@
-
-// JoyShtick.html 
+// index.html 
 // Matthew Olsson 10/10/2014
-// JoyShtick.js Library 
+// Demo for JoyShtick.js Library 
 // http://joyshtickblog.blogspot.com/
 
+// This demo imports the JoyShtick Library and uses its features to manipulate onscreen items 
 <!DOCTYPE html>
 <html>
 
 <head>
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, 
     user-scalable=no, initial-scale=1, maximum-scale=1, user-scalable=0" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -34,25 +33,34 @@
         };
 	})();
 
+	// Globals and constants
 	var playerX, playerY,ctx,joystick,goalX,goalY,appWidth,appHeight;
 	var PLAYER_WIDTH = 30, PLAYER_SPEED = 5, GOAL_WIDTH = 30;
 
+	// initializes the canvas size and JoyShtick
 	function init(){
 		var host = document.getElementById("main");
 		ctx = host.getContext("2d");
 		var result = viewport();
-		host.height = result.height;
-		host.width = result.width;
-		appWidth = host.width;
-		appHeight = host.height;
+		host.height = appHeight = result.height;
+		host.width = appWidth = result.width;
 
+		var func1 = function(){ host.style.background = "yellow"; }
+		var func2 = function(){ host.style.background = "purple"; }
+
+		// ***JoyShtick implementation here***
+		// -----------------------------------------------------------------------------------------------------------------------------------------
 		joystick = new JoyShtick(host.width,host.height);
-		var hello = function(){ host.style.background = "yellow"; }
-		var goodbye = function(){ host.style.background = "purple"; }
 
-		// x,y,function,color(rgba),shape,width
-		joystick.addButton("85%","60%",goodbye,"rgba(0,0,255,.5)","square","6%");
-		joystick.addButton("80%","80%",hello,"rgba(255,0,0,.5)","circle","6%");
+		// Buttons are added by providing an(x,y,function,color(rgba),shape,width)
+		// x, y, and width can also be given as percentages of the containing DOM element (in this case the entire screen)
+		joystick.addButton("85%","60%",func1,"rgba(0,0,255,.5)","square","6%");
+		joystick.addButton("80%","80%",func2,"rgba(255,0,0,.5)","circle","6%");
+
+		// It's also worth noting that once created the joystick has a "stickVector" attribute that holds a "horizontal" and "vertical" component
+		// These components are the x and y displacement of the joystick at any time. They're demonstrated in the "updatePlayer" method below
+		// -----------------------------------------------------------------------------------------------------------------------------------------
+
 
 		playerX = host.width/2;
 		playerY = host.height/2;
@@ -76,9 +84,7 @@
 
 	function animate() {
 	    requestAnimFrame( animate );
-	    // move player
 	    updatePlayer(joystick.stickVector);
-	    // draw player
 	    draw();
 	}
 
@@ -92,9 +98,10 @@
 	    ctx.fill();
 	}
 
+	// Andy Langton
+	// http://andylangton.co.uk/blog/development/get-viewport-size-width-and-height-javascript
 	function viewport() {
-		var e = window
-		, a = 'inner';
+		var e = window, a = 'inner';
 		if ( !( 'innerWidth' in window ) )
 		{
 			a = 'client';
