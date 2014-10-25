@@ -44,7 +44,7 @@ function JoyShtick(appWidth,appHeight){
 			e.preventDefault();
 			dragging = true;
 			if(initialPoint === undefined){
-				initialPoint = {x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY};
+				initialPoint = {x: e.touches[0].clientX, y: e.touches[0].clientY};
 				// draws base of joystick
 				ctxjoystickbottoms.beginPath();
 			    ctxjoystickbottoms.arc(initialPoint.x, initialPoint.y, RADIUS_OF_JOYSTICK_BASE, 0, 2 * Math.PI, false);
@@ -53,7 +53,7 @@ function JoyShtick(appWidth,appHeight){
 			    ctxjoystickbottoms.stroke();
 			}
 
-			endPoint = {x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY};
+			endPoint = {x: e.touches[0].clientX, y: e.touches[0].clientY};
 			drawJoyStickTop(initialPoint,endPoint);
 			updateStickVector(0,initialPoint,endPoint);
 		}, false);
