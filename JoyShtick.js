@@ -7,17 +7,16 @@
 function JoyShtick(appWidth,appHeight){
 
 	// globals
-	var initialPoint, endPoint, dragging = false, canvasBaseLeft, canvasTopLeft, canvasBaseRight, ctxbaseleft, ctxtopleft, ctxbaseright, buttons = [], timeOfLastPress, buttonPressed = {button:undefined,isPressed:false}, previousOpacity;
+	var initialPoint, endPoint, dragging = false, canvasJoyStickBottoms, canvasJoyStickTops, canvasButtons, canvasSmartLayer, ctxjoystickbottoms, ctxjoysticktops, ctxbuttons, ctxsmartlayer, buttons = [], timeOfLastPress, buttonPressed = {button:undefined,isPressed:false}, previousOpacity;
 	// screen dimensions
 	var applicationWidth = appWidth, applicationHeight = appHeight;
 	// joystick calculations
 	var xdistance,ydistance,totalDistance,adjustedX,properY;
 	// visible properties
-	this.stickVector = {horizontal: undefined, vertical: undefined};
+	this.stickVectors = [{horizontal: undefined, vertical: undefined}];
 
 	// constants
 	// TODO - change size of joystick to be responsive to screen size
-	// TODO - accept size of parent DOM element on initialization
 	var RADIUS_OF_JOYSTICK_BASE = 40, RADIUS_OF_JOYSTICK = 25, SIZE_OF_FINGERS = 20, LINE_WIDTH = 5;
 	
 	// "private" functions---------------------------------------------------------------------------------------------------
@@ -27,97 +26,85 @@ function JoyShtick(appWidth,appHeight){
 		createCanvases(applicationWidth, applicationHeight);
 
 		// initializes canvases
-		ctxbaseleft = canvasBaseLeft.getContext("2d");
-		ctxbaseleft.clearRect (0,0,ctxbaseleft.canvas.width,ctxbaseleft.canvas.height); 
+		ctxjoystickbottoms = canvasJoyStickBottoms.getContext("2d");
+		ctxjoystickbottoms.clearRect (0,0,ctxjoystickbottoms.canvas.width,ctxjoystickbottoms.canvas.height); 
 
-		ctxtopleft = canvasTopLeft.getContext("2d");
-		ctxtopleft.clearRect(0,0,ctxtopleft.canvas.width,ctxtopleft.canvas.height);
+		ctxjoysticktops = canvasJoyStickTops.getContext("2d");
+		ctxjoysticktops.clearRect(0,0,ctxjoysticktops.canvas.width,ctxjoysticktops.canvas.height);
 
-		ctxbaseright = canvasBaseRight.getContext("2d");
-		ctxbaseright.clearRect(0,0,ctxbaseright.canvas.width,ctxbaseright.canvas.height);
+		ctxbuttons = canvasButtons.getContext("2d");
+		ctxbuttons.clearRect(0,0,ctxbuttons.canvas.width,ctxbuttons.canvas.height);
 
-		// listen for touches on appropriate canvases
-		canvasTopLeft.addEventListener('touchstart', function(e) { e.preventDefault(); }, false);
+		ctxsmartlayer = canvasSmartLayer.getContext("2d");
+		ctxbuttons.clearRect(0,0,ctxsmartlayer.canvas.width,ctxsmartlayer.canvas.height);
 
-		canvasTopLeft.addEventListener('touchmove', function(e) {
+		// listen for touches on the smart layer
+
+		canvasSmartLayer.addEventListener('touchmove', function(e) {
 			e.preventDefault();
 			dragging = true;
 			if(initialPoint === undefined){
 				initialPoint = {x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY};
 				// draws base of joystick
-				ctxbaseleft.beginPath();
-			    ctxbaseleft.arc(initialPoint.x, initialPoint.y, RADIUS_OF_JOYSTICK_BASE, 0, 2 * Math.PI, false);
-			    ctxbaseleft.lineWidth = LINE_WIDTH;
-			    ctxbaseleft.strokeStyle = "rgba(111, 111, 111, .5)";
-			    ctxbaseleft.stroke();
+				ctxjoystickbottoms.beginPath();
+			    ctxjoystickbottoms.arc(initialPoint.x, initialPoint.y, RADIUS_OF_JOYSTICK_BASE, 0, 2 * Math.PI, false);
+			    ctxjoystickbottoms.lineWidth = LINE_WIDTH;
+			    ctxjoystickbottoms.strokeStyle = "rgba(111, 111, 111, .5)";
+			    ctxjoystickbottoms.stroke();
 			}
 
 			endPoint = {x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY};
 			drawJoyStickTop(initialPoint,endPoint);
-			updateStickVector(initialPoint,endPoint);
+			updateStickVector(0,initialPoint,endPoint);
 		}, false);
 
-		canvasTopLeft.addEventListener('touchend', (function(e) {
+		canvasSmartLayer.addEventListener('touchend', (function(e) {
 			e.preventDefault();
 			if(dragging){
 				dragging = false;
 				initialPoint = undefined;
-				ctxbaseleft.clearRect (0,0,ctxbaseleft.canvas.width,ctxbaseleft.canvas.height);
-				ctxtopleft.clearRect(0,0,ctxtopleft.canvas.width,ctxtopleft.canvas.height);
-				this.stickVector.horizontal = undefined;
-				this.stickVector.vertical = undefined;
+				ctxjoystickbottoms.clearRect (0,0,ctxjoystickbottoms.canvas.width,ctxjoystickbottoms.canvas.height);
+				ctxjoysticktops.clearRect(0,0,ctxjoysticktops.canvas.width,ctxjoysticktops.canvas.height);
+				this.stickVectors[0].horizontal = undefined;
+				this.stickVectors[0].vertical = undefined;
 			}
 		}.bind(this)), false); // this is being bound for the stickVector property to be set
 
-		canvasBaseRight.addEventListener('touchstart', function(e){
+		canvasSmartLayer.addEventListener('touchstart', function(e){
 			pressButton(e);
 		}, false);
 
-		canvasBaseRight.addEventListener('touchend', function(e){
+		canvasSmartLayer.addEventListener('touchend', function(e){
 			releaseButton();
 		}, false);
 	}.bind(this)); // this is being bound for the stickVector property to be set
 
 	// creates canvases, and applies css to them appropriately
 	var createCanvases = function(appWidth,appHeight){
-		canvasBaseLeft = document.createElement("canvas");
-		canvasBaseLeft.style.display = "block";
-		canvasBaseLeft.style.margin = "auto";
-		canvasBaseLeft.style.position = "absolute";
-		canvasBaseLeft.style.zIndex = 0;
-		canvasBaseLeft.style.left = 0;
-		canvasBaseLeft.style.top = 0;
-		canvasBaseLeft.width  = applicationWidth/2;
-		canvasBaseLeft.height = applicationHeight;
-		document.body.appendChild(canvasBaseLeft);
-		
-		canvasTopLeft = document.createElement("canvas");
-		canvasTopLeft.style.display = "block";
-		canvasTopLeft.style.margin = "auto";
-		canvasTopLeft.style.position = "absolute";
-		canvasTopLeft.style.zIndex = 1;
-		canvasTopLeft.style.left = 0;
-		canvasTopLeft.style.top = 0;
-		canvasTopLeft.width  = applicationWidth/2;
-		canvasTopLeft.height = applicationHeight;
-		document.body.appendChild(canvasTopLeft);
 
-		canvasBaseRight = document.createElement("canvas");
-		canvasBaseRight.style.display = "block";
-		canvasBaseRight.style.position = "absolute";
-		canvasBaseRight.style.zIndex = 0;
-		canvasBaseRight.style.left = 0;
-		canvasBaseRight.style.top = 0;
-		canvasBaseRight.style.marginLeft = appWidth/2; 
-		canvasBaseRight.width  = applicationWidth/2;
-		canvasBaseRight.height = applicationHeight;
-		document.body.appendChild(canvasBaseRight);
+		canvasJoyStickBottoms = document.createElement("canvas");
+		canvasJoyStickTops = document.createElement("canvas");
+		canvasButtons = document.createElement("canvas");
+		canvasSmartLayer = document.createElement("canvas");
+
+		canvasJoyStickBottoms.style.display = canvasJoyStickTops.style.display = canvasButtons.style.display = canvasSmartLayer.style.display = "block";
+		canvasJoyStickBottoms.style.margin = canvasJoyStickTops.style.margin = canvasButtons.style.margin = canvasSmartLayer.style.margin = "auto";
+		canvasJoyStickBottoms.style.position = canvasJoyStickTops.style.position = canvasButtons.style.position = canvasSmartLayer.style.position = "absolute";
+		canvasJoyStickBottoms.style.left = canvasJoyStickTops.style.left = canvasButtons.style.left = canvasSmartLayer.style.left = 0;
+		canvasJoyStickBottoms.style.top = canvasJoyStickTops.style.top = canvasButtons.style.top = canvasSmartLayer.style.top = 0;
+		canvasJoyStickBottoms.width  = canvasJoyStickTops.width = canvasButtons.width = canvasSmartLayer.width = applicationWidth;
+		canvasJoyStickBottoms.height = canvasJoyStickTops.height = canvasButtons.height = canvasSmartLayer.height = applicationHeight;
+
+		document.body.appendChild(canvasJoyStickBottoms);
+		document.body.appendChild(canvasJoyStickTops);
+		document.body.appendChild(canvasButtons);
+		document.body.appendChild(canvasSmartLayer);
 	};
 
 	// updates the stickVector property
-	var updateStickVector = (function(initialPoint,currentPoint){
-		this.stickVector.horizontal = (currentPoint.x-initialPoint.x);
-		this.stickVector.vertical = (currentPoint.y-initialPoint.y);
+	var updateStickVector = (function(index,initialPoint,currentPoint){
+		this.stickVectors[index].horizontal = (currentPoint.x-initialPoint.x);
+		this.stickVectors[index].vertical = (currentPoint.y-initialPoint.y);
 	}.bind(this));
 
 	// draws the top of the joystick and constrains it to the bases circumference
@@ -138,15 +125,15 @@ function JoyShtick(appWidth,appHeight){
 			adjustedX = initialPoint.x + changeX;
 			adjustedY = initialPoint.y + changeY;
 		}
-		ctxtopleft.clearRect(0,0,ctxtopleft.canvas.width,ctxtopleft.canvas.height);
-		ctxtopleft.beginPath();
-		ctxtopleft.strokeStyle = "rgba(111, 111, 111, .5)";
-		ctxtopleft.fillStyle = "rgba(111, 111, 111, .5)";
-	    ctxtopleft.arc(adjustedX, adjustedY, RADIUS_OF_JOYSTICK, 0, 2 * Math.PI, false);
-	    ctxtopleft.lineWidth = LINE_WIDTH;
-	    ctxtopleft.fill();
-	    ctxtopleft.stroke();
-	    ctxtopleft.closePath();
+		ctxjoysticktops.clearRect(0,0,ctxjoysticktops.canvas.width,ctxjoysticktops.canvas.height);
+		ctxjoysticktops.beginPath();
+		ctxjoysticktops.strokeStyle = "rgba(111, 111, 111, .5)";
+		ctxjoysticktops.fillStyle = "rgba(111, 111, 111, .5)";
+	    ctxjoysticktops.arc(adjustedX, adjustedY, RADIUS_OF_JOYSTICK, 0, 2 * Math.PI, false);
+	    ctxjoysticktops.lineWidth = LINE_WIDTH;
+	    ctxjoysticktops.fill();
+	    ctxjoysticktops.stroke();
+	    ctxjoysticktops.closePath();
 	};
 
 	// sanitizes the input percentages for x,y,and size, and returns the proper result
@@ -161,19 +148,19 @@ function JoyShtick(appWidth,appHeight){
 	var drawButtons = function(specific){
 		// draws buttons as they are added (only happens upon adding a button)
 		if(specific === undefined){
-			ctxbaseright.beginPath();
-			ctxbaseright.fillStyle = buttons[buttons.length-1].color;
-			ctxbaseright.strokeStyle = buttons[buttons.length-1].color;
-			ctxbaseright.lineWidth = LINE_WIDTH;
+			ctxbuttons.beginPath();
+			ctxbuttons.fillStyle = buttons[buttons.length-1].color;
+			ctxbuttons.strokeStyle = buttons[buttons.length-1].color;
+			ctxbuttons.lineWidth = LINE_WIDTH;
 			if(buttons[buttons.length-1].shape === "circle"){
-			    ctxbaseright.arc(buttons[buttons.length-1].x-applicationWidth/2,buttons[buttons.length-1].y, buttons[buttons.length-1].size/2, 0, Math.PI * 2, false);
+			    ctxbuttons.arc(buttons[buttons.length-1].x,buttons[buttons.length-1].y, buttons[buttons.length-1].size/2, 0, Math.PI * 2, false);
 			}
 			else if(buttons[buttons.length-1].shape === "square"){
-			    ctxbaseright.rect(buttons[buttons.length-1].x-applicationWidth/2,buttons[buttons.length-1].y, buttons[buttons.length-1].size, buttons[buttons.length-1].size);
+			    ctxbuttons.rect(buttons[buttons.length-1].x,buttons[buttons.length-1].y, buttons[buttons.length-1].size, buttons[buttons.length-1].size);
 			}
-			ctxbaseright.fill();
-		    ctxbaseright.stroke();
-		    ctxbaseright.closePath();
+			ctxbuttons.fill();
+		    ctxbuttons.stroke();
+		    ctxbuttons.closePath();
 		}
 		// draws a specific button as pressed, or if it is already pressed it redraws it as unpressed (only happens after JoyShtick is launched and running)
 		else {
@@ -187,26 +174,25 @@ function JoyShtick(appWidth,appHeight){
 			}
 			specific.button.color = tempArray.toString();
 
-			ctxbaseright.beginPath();
-			ctxbaseright.fillStyle = specific.button.color;
-			ctxbaseright.strokeStyle = specific.button.color;
-			ctxbaseright.lineWidth = LINE_WIDTH;
+			ctxbuttons.beginPath();
+			ctxbuttons.fillStyle = specific.button.color;
+			ctxbuttons.strokeStyle = specific.button.color;
+			ctxbuttons.lineWidth = LINE_WIDTH;
 			if(specific.button.shape === "circle"){
-				ctxbaseright.clearRect(specific.button.x-applicationWidth/2-LINE_WIDTH-specific.button.size/2,specific.button.y-LINE_WIDTH-specific.button.size/2,specific.button.size+LINE_WIDTH*2,specific.button.size+LINE_WIDTH*2);
-			    ctxbaseright.arc(specific.button.x-applicationWidth/2,specific.button.y, specific.button.size/2, 0, Math.PI * 2, false);
+				ctxbuttons.clearRect(specific.button.x-LINE_WIDTH-specific.button.size/2,specific.button.y-LINE_WIDTH-specific.button.size/2,specific.button.size+LINE_WIDTH*2,specific.button.size+LINE_WIDTH*2);
+			    ctxbuttons.arc(specific.button.x,specific.button.y, specific.button.size/2, 0, Math.PI * 2, false);
 			}
 			else if(specific.button.shape === "square"){
-				ctxbaseright.clearRect(specific.button.x-applicationWidth/2-LINE_WIDTH,specific.button.y-LINE_WIDTH,specific.button.size+LINE_WIDTH*2,specific.button.size+LINE_WIDTH*2);
-			    ctxbaseright.rect(specific.button.x-applicationWidth/2,specific.button.y, specific.button.size, specific.button.size);
+				ctxbuttons.clearRect(specific.button.x-LINE_WIDTH,specific.button.y-LINE_WIDTH,specific.button.size+LINE_WIDTH*2,specific.button.size+LINE_WIDTH*2);
+			    ctxbuttons.rect(specific.button.x,specific.button.y, specific.button.size, specific.button.size);
 			}
-			ctxbaseright.fill();
-		    ctxbaseright.stroke();
-		    ctxbaseright.closePath();
+			ctxbuttons.fill();
+		    ctxbuttons.stroke();
+		    ctxbuttons.closePath();
 		}
 	};
 
 	// press button - performs simple collisions detection with a little spare room for finger size
-	// TODO - fix mouse x and y coordinates to account for the application not being in the top left
 	var pressButton = function(e){
 		if(buttons != undefined){
 			// if the joystick is in use while the buttons are being pressed a different index must be consulted for touches
