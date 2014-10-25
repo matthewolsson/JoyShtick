@@ -69,10 +69,10 @@
 		animate();
 	}
 
-	function updatePlayer(stickVectors){
-		if(stickVectors[0].horizontal != undefined && stickVectors[0].vertical != undefined){
-			playerX += (stickVectors[0].horizontal/100)*PLAYER_SPEED;
-			playerY += (stickVectors[0].vertical/100)*PLAYER_SPEED;
+	function updatePlayer(stickVector){
+		if(stickVector.horizontal != undefined && stickVector.vertical != undefined){
+			playerX += (stickVector.horizontal/100)*PLAYER_SPEED;
+			playerY += (stickVector.vertical/100)*PLAYER_SPEED;
 		}
 		
 		// checks for collision between player and goal
@@ -84,7 +84,7 @@
 
 	function animate() {
 	    requestAnimFrame( animate );
-	    updatePlayer(joystick.stickVectors);
+	    updatePlayer(joystick.stickVector);
 	    draw();
 	}
 
