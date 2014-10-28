@@ -7,7 +7,7 @@
 function JoyShtick(appWidth,appHeight){
 
 	// globals
-	var initialPoint, endPoint, dragging = false, canvasJoyStickBottoms, canvasJoyStickTops, canvasButtons, canvasSmartLayer, ctxjoystickbottoms, ctxjoysticktops, ctxbuttons, ctxsmartlayer, buttons = [], timeOfLastPress, buttonPressed = {button:undefined,isPressed:false}, previousOpacity;
+	var joyStickBase, joyStickTop, dragging = false, canvasJoyStickBottoms, canvasJoyStickTops, canvasButtons, canvasSmartLayer, ctxjoystickbottoms, ctxjoysticktops, ctxbuttons, ctxsmartlayer, buttons = [], timeOfLastPress, buttonPressed = {button:undefined,isPressed:false}, previousOpacity;
 	// screen dimensions
 	var applicationWidth = appWidth, applicationHeight = appHeight;
 	// joystick calculations
@@ -43,39 +43,57 @@ function JoyShtick(appWidth,appHeight){
 		canvasSmartLayer.addEventListener('touchmove', function(e) {
 			e.preventDefault();
 			dragging = true;
-			if(initialPoint === undefined){
-				initialPoint = {x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY};
+			if(joyStickBase === undefined){
+				joyStickBase = {x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY};
 				// draws base of joystick
 				ctxjoystickbottoms.beginPath();
-			    ctxjoystickbottoms.arc(initialPoint.x, initialPoint.y, RADIUS_OF_JOYSTICK_BASE, 0, 2 * Math.PI, false);
+			    ctxjoystickbottoms.arc(joyStickBase.x, joyStickBase.y, RADIUS_OF_JOYSTICK_BASE, 0, 2 * Math.PI, false);
 			    ctxjoystickbottoms.lineWidth = LINE_WIDTH;
 			    ctxjoystickbottoms.strokeStyle = "rgba(111, 111, 111, .5)";
 			    ctxjoystickbottoms.stroke();
 			}
 
-			endPoint = {x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY};
-			drawJoyStickTop(initialPoint,endPoint);
-			updateStickVector(0,initialPoint,endPoint);
+			joyStickTop = {x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY};
+			drawJoyStickTop(joyStickBase,joyStickTop);
+			updateStickVector(0,joyStickBase,joyStickTop);
 		}, false);
 
 		canvasSmartLayer.addEventListener('touchend', (function(e) {
 			e.preventDefault();
-			if(dragging){
+
+			var released = {x:e.changedTouches[0].clientX, y:e.changedTouches[0].clientY};
+			debugger;
+			var buttonReleased = false;
+
+			if(buttonPressed.isPressed){ // if a button is being pressed
+				switch(buttonPressed.button.shape){
+					case "square": {
+						if ((((released.x-buttonPressed.button.x))<(buttonPressed.button.size+SIZE_OF_FINGERS/2)&&((released.x-buttonPressed.button.x)>(0-SIZE_OF_FINGERS/2)))&&(((released.y-buttonPressed.button.y))<(buttonPressed.button.size+SIZE_OF_FINGERS/2)&&((released.y-buttonPressed.button.y)>(0-SIZE_OF_FINGERS/2)))){
+							releaseButton();
+							buttonReleased = true;
+						}
+					} break;
+					case "circle": {
+						if ((((released.x-buttonPressed.button.x)*(released.x-buttonPressed.button.x))+((released.y-buttonPressed.button.y)*(released.y-buttonPressed.button.y)))<(((buttonPressed.button.size/2)*(buttonPressed.button.size/2))+(SIZE_OF_FINGERS*SIZE_OF_FINGERS))){
+							releaseButton();
+							buttonReleased = true;
+						}
+					} break;
+				}
+			} 
+			if(dragging && buttonReleased === false){ // if the released touch doesn't intersect with a pressed button OR there are no buttons being pressed
 				dragging = false;
-				initialPoint = undefined;
+				joyStickBase = undefined;
 				ctxjoystickbottoms.clearRect (0,0,ctxjoystickbottoms.canvas.width,ctxjoystickbottoms.canvas.height);
 				ctxjoysticktops.clearRect(0,0,ctxjoysticktops.canvas.width,ctxjoysticktops.canvas.height);
 				this.stickVectors[0].horizontal = undefined;
 				this.stickVectors[0].vertical = undefined;
-			}
+			} 
+
 		}.bind(this)), false); // this is being bound for the stickVector property to be set
 
 		canvasSmartLayer.addEventListener('touchstart', function(e){
 			pressButton(e);
-		}, false);
-
-		canvasSmartLayer.addEventListener('touchend', function(e){
-			releaseButton();
 		}, false);
 	}.bind(this)); // this is being bound for the stickVector property to be set
 
@@ -102,15 +120,15 @@ function JoyShtick(appWidth,appHeight){
 	};
 
 	// updates the stickVector property
-	var updateStickVector = (function(index,initialPoint,currentPoint){
-		this.stickVectors[index].horizontal = (currentPoint.x-initialPoint.x);
-		this.stickVectors[index].vertical = (currentPoint.y-initialPoint.y);
+	var updateStickVector = (function(index,joyStickBase,currentPoint){
+		this.stickVectors[index].horizontal = (currentPoint.x-joyStickBase.x);
+		this.stickVectors[index].vertical = (currentPoint.y-joyStickBase.y);
 	}.bind(this));
 
 	// draws the top of the joystick and constrains it to the bases circumference
-	var drawJoyStickTop = function(initialPoint,currentPoint){
-		xdistance = currentPoint.x-initialPoint.x;
-		ydistance = currentPoint.y-initialPoint.y;
+	var drawJoyStickTop = function(joyStickBase,currentPoint){
+		xdistance = currentPoint.x-joyStickBase.x;
+		ydistance = currentPoint.y-joyStickBase.y;
 		totalDistance = (xdistance*xdistance+ydistance*ydistance);
 		adjustedX = currentPoint.x,adjustedY = currentPoint.y; // if inside base circle no adjustments needed
 		// if the top joystick is outside of the base circle
@@ -122,8 +140,8 @@ function JoyShtick(appWidth,appHeight){
 			changeX = changeX*xdistance/Math.abs(xdistance);
 			changeY = changeY*ydistance/Math.abs(ydistance);
 			// overwriting the top joysticks positions with the appropriate adjustments
-			adjustedX = initialPoint.x + changeX;
-			adjustedY = initialPoint.y + changeY;
+			adjustedX = joyStickBase.x + changeX;
+			adjustedY = joyStickBase.y + changeY;
 		}
 		ctxjoysticktops.clearRect(0,0,ctxjoysticktops.canvas.width,ctxjoysticktops.canvas.height);
 		ctxjoysticktops.beginPath();
@@ -196,7 +214,7 @@ function JoyShtick(appWidth,appHeight){
 	var pressButton = function(e){
 		if(buttons != undefined){
 			// if the joystick is in use while the buttons are being pressed a different index must be consulted for touches
-			if(initialPoint != undefined){
+			if(joyStickBase != undefined){
 				var press = {x:e.touches[1].clientX, y:e.touches[1].clientY};
 			} else {
 				var press = {x:e.touches[0].clientX, y:e.touches[0].clientY};
