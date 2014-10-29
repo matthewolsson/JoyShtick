@@ -7,11 +7,11 @@
 function JoyShtick(appWidth,appHeight){
 
 	// globals
-	var joyStickBase, joyStickTop, dragging = false, canvasJoyStickBottoms, canvasJoyStickTops, canvasButtons, canvasSmartLayer, ctxjoystickbottoms, ctxjoysticktops, ctxbuttons, ctxsmartlayer, buttons = [], timeOfLastPress, buttonPressed = {button:undefined,isPressed:false}, previousOpacity;
+	var joyStickBase, joyStickTop, dragging = false, canvasJoyStickBottoms, canvasJoyStickTops, canvasButtons, canvasSmartLayer, ctxjoystickbottoms, ctxjoysticktops, ctxbuttons, ctxsmartlayer, buttons = [], timeOfLastPress, buttonPressed = {button:undefined,isPressed:false}, previousOpacity, joyStickIndex = 0;
 	// screen dimensions
 	var applicationWidth = appWidth, applicationHeight = appHeight;
 	// joystick calculations
-	var xdistance,ydistance,totalDistance,adjustedX,properY;
+	var xdistance,ydistance,totalDistance,adjustedX,adjustedY;
 	// visible properties
 	this.stickVectors = [{horizontal: undefined, vertical: undefined}];
 
@@ -43,8 +43,12 @@ function JoyShtick(appWidth,appHeight){
 		canvasSmartLayer.addEventListener('touchmove', function(e) {
 			e.preventDefault();
 			dragging = true;
+
+			// this conditional makes sure the joystick is always looking at the correct touch on the array of touches
+			if(buttonPressed.isPressed && (joyStickBase === undefined || joyStickIndex === 1)){joyStickIndex = 1;} else { joyStickIndex = 0;}
+
 			if(joyStickBase === undefined){
-				joyStickBase = {x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY};
+				joyStickBase = {x: e.touches[joyStickIndex].clientX, y: e.touches[joyStickIndex].clientY};
 				// draws base of joystick
 				ctxjoystickbottoms.beginPath();
 			    ctxjoystickbottoms.arc(joyStickBase.x, joyStickBase.y, RADIUS_OF_JOYSTICK_BASE, 0, 2 * Math.PI, false);
@@ -53,7 +57,7 @@ function JoyShtick(appWidth,appHeight){
 			    ctxjoystickbottoms.stroke();
 			}
 
-			joyStickTop = {x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY};
+			joyStickTop = {x: e.touches[joyStickIndex].clientX, y: e.touches[joyStickIndex].clientY};
 			drawJoyStickTop(joyStickBase,joyStickTop);
 			updateStickVector(0,joyStickBase,joyStickTop);
 		}, false);
@@ -62,7 +66,7 @@ function JoyShtick(appWidth,appHeight){
 			e.preventDefault();
 
 			var released = {x:e.changedTouches[0].clientX, y:e.changedTouches[0].clientY};
-			debugger;
+
 			var buttonReleased = false;
 
 			if(buttonPressed.isPressed){ // if a button is being pressed
@@ -82,12 +86,19 @@ function JoyShtick(appWidth,appHeight){
 				}
 			} 
 			if(dragging && buttonReleased === false){ // if the released touch doesn't intersect with a pressed button OR there are no buttons being pressed
-				dragging = false;
-				joyStickBase = undefined;
-				ctxjoystickbottoms.clearRect (0,0,ctxjoystickbottoms.canvas.width,ctxjoystickbottoms.canvas.height);
-				ctxjoysticktops.clearRect(0,0,ctxjoysticktops.canvas.width,ctxjoysticktops.canvas.height);
-				this.stickVectors[0].horizontal = undefined;
-				this.stickVectors[0].vertical = undefined;
+				
+				// CONFUSION: If there is one finger moving on the screen and it raises off the screen shouldn't the only coordinate in the touches array match the only coordinate in the ChangedTouches array when the finger is lifted? Trial and error prove that they only match like 90% of the time.
+				
+				//console.log("changed: " + released.x + " " + released.y + " Top: " + joyStickTop.x + " " + joyStickTop.y);
+				//if(released.x === joyStickTop.x && released.y === joyStickTop.y){
+					joyStickIndex = 0;
+					dragging = false;
+					joyStickBase = undefined;
+					ctxjoystickbottoms.clearRect (0,0,ctxjoystickbottoms.canvas.width,ctxjoystickbottoms.canvas.height);
+					ctxjoysticktops.clearRect(0,0,ctxjoysticktops.canvas.width,ctxjoysticktops.canvas.height);
+					this.stickVectors[0].horizontal = undefined;
+					this.stickVectors[0].vertical = undefined;
+				//}
 			} 
 
 		}.bind(this)), false); // this is being bound for the stickVector property to be set
@@ -130,7 +141,8 @@ function JoyShtick(appWidth,appHeight){
 		xdistance = currentPoint.x-joyStickBase.x;
 		ydistance = currentPoint.y-joyStickBase.y;
 		totalDistance = (xdistance*xdistance+ydistance*ydistance);
-		adjustedX = currentPoint.x,adjustedY = currentPoint.y; // if inside base circle no adjustments needed
+		adjustedX = currentPoint.x;
+		adjustedY = currentPoint.y; // if inside base circle no adjustments needed
 		// if the top joystick is outside of the base circle
 		if(totalDistance > 1600){ 
 			// calculates the x and y offsets from the origin of the base joystick

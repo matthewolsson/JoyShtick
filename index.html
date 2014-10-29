@@ -45,8 +45,8 @@
 		host.height = appHeight = result.height;
 		host.width = appWidth = result.width;
 
-		var func1 = function(){ host.style.background = "orange"; }
-		var func2 = function(){ host.style.background = "purple"; }
+		var func1 = function(){ host.style.background = "purple"; }
+		var func2 = function(){ host.style.background = "yellow"; }
 
 		// ***JoyShtick implementation here***
 		// -----------------------------------------------------------------------------------------------------------------------------------------
@@ -61,7 +61,6 @@
 		// These components are the x and y displacement of the joystick at any time. They're demonstrated in the "updatePlayer" method below
 		// -----------------------------------------------------------------------------------------------------------------------------------------
 
-
 		playerX = host.width/2;
 		playerY = host.height/2;
 		goalX = Math.floor(Math.random() * (appWidth-1)) + 1;
@@ -71,8 +70,25 @@
 
 	function updatePlayer(stickVectors){
 		if(stickVectors[0].horizontal != undefined && stickVectors[0].vertical != undefined){
+			
+			// Joystick controls
 			playerX += (stickVectors[0].horizontal/100)*PLAYER_SPEED;
 			playerY += (stickVectors[0].vertical/100)*PLAYER_SPEED;
+
+			// D-Pad controls
+			/*if(Math.abs(stickVectors[0].horizontal) > Math.abs(stickVectors[0].vertical)) { 
+				if(stickVectors[0].horizontal > 0){
+					playerX += 20/PLAYER_SPEED
+				} else {
+					playerX -= 20/PLAYER_SPEED
+				}
+			} else {
+				if(stickVectors[0].vertical > 0){
+					playerY += 20/PLAYER_SPEED
+				} else {
+					playerY -= 20/PLAYER_SPEED
+				}
+			}*/
 		}
 		
 		// checks for collision between player and goal
