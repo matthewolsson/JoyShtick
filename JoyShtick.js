@@ -4,7 +4,7 @@
 // http://joyshtickblog.blogspot.com/
 
 
-function JoyShtick(appWidth,appHeight){
+function JoyShtick(appWidth,appHeight,userInputJoyStickBase){
 
 	// globals
 	var joyStickBase, joyStickTop, dragging = false, canvasJoyStickBottoms, canvasJoyStickTops, canvasButtons, canvasSmartLayer, ctxjoystickbottoms, ctxjoysticktops, ctxbuttons, ctxsmartlayer, buttons = [], timeOfLastPress, buttonPressed = {button:undefined,isPressed:false}, previousOpacity, joyStickIndex = 0;
@@ -16,14 +16,15 @@ function JoyShtick(appWidth,appHeight){
 	this.stickVectors = [{horizontal: undefined, vertical: undefined}];
 
 	// constants
-	// TODO - change size of joystick to be responsive to screen size
-	var RADIUS_OF_JOYSTICK_BASE = 40, RADIUS_OF_JOYSTICK = 25, SIZE_OF_FINGERS = 20, LINE_WIDTH = 5;
+	var radiusOfJoyStickBase, radiusOfJoyStick, SIZE_OF_FINGERS = 20, LINE_WIDTH = 5;
 	
 	// "private" functions---------------------------------------------------------------------------------------------------
 
 	// initializes the JoyShtick
 	var init = (function(){
 		createCanvases(applicationWidth, applicationHeight);
+		if((typeof userInputJoyStickBase) === "string"){ radiusOfJoyStickBase = sanitizeInput(userInputJoyStickBase,"size"); } else { radiusOfJoyStickBase = userInputJoyStickBase; }
+		radiusOfJoyStick = radiusOfJoyStickBase/2;
 
 		// initializes canvases
 		ctxjoystickbottoms = canvasJoyStickBottoms.getContext("2d");
@@ -51,7 +52,7 @@ function JoyShtick(appWidth,appHeight){
 				joyStickBase = {x: e.touches[joyStickIndex].clientX, y: e.touches[joyStickIndex].clientY};
 				// draws base of joystick
 				ctxjoystickbottoms.beginPath();
-			    ctxjoystickbottoms.arc(joyStickBase.x, joyStickBase.y, RADIUS_OF_JOYSTICK_BASE, 0, 2 * Math.PI, false);
+			    ctxjoystickbottoms.arc(joyStickBase.x, joyStickBase.y, radiusOfJoyStickBase, 0, 2 * Math.PI, false);
 			    ctxjoystickbottoms.lineWidth = LINE_WIDTH;
 			    ctxjoystickbottoms.strokeStyle = "rgba(111, 111, 111, .5)";
 			    ctxjoystickbottoms.stroke();
@@ -144,10 +145,10 @@ function JoyShtick(appWidth,appHeight){
 		adjustedX = currentPoint.x;
 		adjustedY = currentPoint.y; // if inside base circle no adjustments needed
 		// if the top joystick is outside of the base circle
-		if(totalDistance > 1600){ 
+		if(totalDistance > (radiusOfJoyStickBase*radiusOfJoyStickBase)){ 
 			// calculates the x and y offsets from the origin of the base joystick
-			changeX = (RADIUS_OF_JOYSTICK_BASE)/Math.sqrt(1 + ((ydistance*ydistance)/(xdistance*xdistance)));
-			changeY = Math.sqrt(RADIUS_OF_JOYSTICK_BASE*RADIUS_OF_JOYSTICK_BASE - changeX*changeX);
+			changeX = (radiusOfJoyStickBase)/Math.sqrt(1 + ((ydistance*ydistance)/(xdistance*xdistance)));
+			changeY = Math.sqrt(radiusOfJoyStickBase*radiusOfJoyStickBase - changeX*changeX);
 			// adjusts the offsets for all four quadrants of the circle
 			changeX = changeX*xdistance/Math.abs(xdistance);
 			changeY = changeY*ydistance/Math.abs(ydistance);
@@ -159,7 +160,7 @@ function JoyShtick(appWidth,appHeight){
 		ctxjoysticktops.beginPath();
 		ctxjoysticktops.strokeStyle = "rgba(111, 111, 111, .5)";
 		ctxjoysticktops.fillStyle = "rgba(111, 111, 111, .5)";
-	    ctxjoysticktops.arc(adjustedX, adjustedY, RADIUS_OF_JOYSTICK, 0, 2 * Math.PI, false);
+	    ctxjoysticktops.arc(adjustedX, adjustedY, radiusOfJoyStick, 0, 2 * Math.PI, false);
 	    ctxjoysticktops.lineWidth = LINE_WIDTH;
 	    ctxjoysticktops.fill();
 	    ctxjoysticktops.stroke();
